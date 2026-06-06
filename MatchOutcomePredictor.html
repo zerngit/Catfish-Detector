@@ -26,7 +26,7 @@
 <script type="text/babel">
 const { useState, useCallback } = React;
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = '/api';
 
 // ─── Mock Database Records ─────────────────────────────────────────────────────
 // Simulated historical catfish detection results.
@@ -601,7 +601,7 @@ function PredictorView({ formData, setFormData, loading, setLoading, result, set
       setResult(data);
     } catch (err) {
       console.error('Detection failed:', err);
-      setApiError(err.message || 'Could not reach the detection API. Make sure the backend is running on port 8000.');
+      setApiError(err.message || 'Could not reach the detection API.');
     } finally {
       setLoading(false);
     }
@@ -634,7 +634,7 @@ function PredictorView({ formData, setFormData, loading, setLoading, result, set
           <div>
             <p className="font-semibold mb-0.5">Backend Connection Error</p>
             <p className="text-orange-300/80">{apiError}</p>
-            <p className="mt-1 text-xs text-orange-400/60">Run: <code className="bg-slate-800 px-1 rounded">uvicorn main:app --reload --port 8000</code></p>
+            <p className="mt-1 text-xs text-orange-400/60">Run the FastAPI backend locally with <code className="bg-slate-800 px-1 rounded">uvicorn main:app --reload --port 8000</code></p>
           </div>
         </div>
       )}
