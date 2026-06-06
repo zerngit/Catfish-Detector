@@ -87,6 +87,16 @@ const INITIAL_STATE = {
   emoji_usage_rate: '', last_active_hour: '',
 };
 
+const DEMO_STATE = {
+  gender: 'Male', sexual_orientation: 'Pansexual', location_type: 'Urban',
+  income_bracket: 'Low', education_level: 'Diploma', profile_pics_count: '4',
+  app_usage_time_label: 'High', app_usage_time_minute: '90', last_active_hour: '20',
+  message_sent_count: '89', emoji_usage_rate: '0.77', bio_length: '53',
+  swipe_right_label: 'Balanced', swipe_time_of_day: 'After Midnight',
+  swip_right_ratio: '0.56', likes_received: '394', mutual_matches: '15',
+  interest_tags: 'Art, Reading, Photography, Fitness',
+};
+
 // ─── Shared UI Primitives ─────────────────────────────────────────────────────
 
 function SectionHeader({ icon, title, subtitle }) {
@@ -552,6 +562,15 @@ function PredictorView({ formData, setFormData, loading, setLoading, result, set
     setFormData(prev => ({ ...prev, interest_tags: tagString }));
   }, [setFormData]);
 
+  const handleDemo = useCallback((e) => {
+    if (e.target.checked) {
+      setFormData(DEMO_STATE);
+      setErrors({});
+    } else {
+      setFormData(INITIAL_STATE);
+    }
+  }, [setFormData, setErrors]);
+
   const validate = () => {
     const errs = {};
     Object.keys(INITIAL_STATE).forEach(k => {
@@ -643,7 +662,22 @@ function PredictorView({ formData, setFormData, loading, setLoading, result, set
         <div className="space-y-6">
 
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-            <SectionHeader icon="👤" title="Profile Details" subtitle="Claimed identity attributes of the profile" />
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-slate-700/50 flex items-center justify-center text-lg">👤</div>
+                <div>
+                  <h2 className="text-base font-semibold text-slate-100">Profile Details</h2>
+                  <p className="text-xs text-slate-500">Claimed identity attributes of the profile</p>
+                </div>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer select-none group">
+                <input type="checkbox" onChange={handleDemo}
+                  className="w-4 h-4 rounded accent-rose-500 cursor-pointer" />
+                <span className="text-xs text-slate-400 group-hover:text-slate-200 transition-colors whitespace-nowrap">
+                  Fill demo data
+                </span>
+              </label>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <SelectField label="Gender"            name="gender"            value={formData.gender}            options={DROPDOWN_OPTIONS.gender}            onChange={handleChange} />
               <SelectField label="Sexual Orientation" name="sexual_orientation" value={formData.sexual_orientation} options={DROPDOWN_OPTIONS.sexual_orientation} onChange={handleChange} />
