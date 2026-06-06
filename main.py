@@ -10,8 +10,8 @@ import warnings
 from pathlib import Path
 from typing import List
 
-import joblib
 import numpy as np
+import onnxruntime as ort
 import pandas as pd
 import uvicorn
 from fastapi import FastAPI, HTTPException
@@ -22,15 +22,27 @@ warnings.filterwarnings("ignore")
 
 # ── Model Loading ────────────────────────────────────────────────────────────
 
-MODEL_PATH = Path(__file__).parent / "catfish_best_model.joblib"
+_BASE = Path(__file__).parent
 
-if not MODEL_PATH.exists():
-    raise FileNotFoundError(f"Model file not found: {MODEL_PATH}")
+for _required in ("model.onnx", "scaler_mean.npy", "scaler_scale.npy"):
+    if not (_BASE / _required).exists():
+        raise FileNotFoundError(
+            f"Missing {_required}. Run convert_to_onnx.py locally first."
+        )
 
-_bundle: dict = joblib.load(MODEL_PATH)
-_model          = _bundle["model"]
-_scaler         = _bundle["scaler"]
-_feature_columns: List[str] = _bundle["feature_columns"]
+_session      = ort.InferenceSession(str(_BASE / "model.onnx"))
+_scaler_mean  = np.load(str(_BASE / "scaler_mean.npy"))
+_scaler_scale = np.load(str(_BASE / "scaler_scale.npy"))
+
+# feature_columns order must match what was used during training — read from a
+# small sidecar file produced by convert_to_onnx.py, or hardcode here if stable.
+_FEATURE_COLUMNS_PATH = _BASE / "feature_columns.npy"
+if _FEATURE_COLUMNS_PATH.exists():
+    _feature_columns: List[str] = np.load(str(_FEATURE_COLUMNS_PATH), allow_pickle=True).tolist()
+else:
+    raise FileNotFoundError(
+        "Missing feature_columns.npy. Run convert_to_onnx.py locally first."
+    )
 
 # ── Encoding Maps ────────────────────────────────────────────────────────────
 # LabelEncoder was fit on sorted unique values from the training CSV.
@@ -165,7 +177,7 @@ def _build_feature_vector(p: ProfilePayload) -> pd.DataFrame:
     for st in TIME_OHE:
         feat[f"swipe_time_of_day_{st}"] = 1 if p.swipe_time_of_day == st else 0
 
-    return pd.DataFrame([feat])[_feature_columns]
+    return pd.DataFrame([feat])[_feature_columns].astype(np.float32)
 
 
 def _compute_red_flags(p: ProfilePayload) -> List[str]:
@@ -222,7 +234,7 @@ app.add_middleware(
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok", "model": _bundle.get("model_name", "unknown")}
+    return {"status": "ok", "model": "lightgbm-onnx"}
 
 
 @app.post("/detect_catfish", response_model=DetectionResponse)
@@ -233,8 +245,12 @@ def detect_catfish(payload: ProfilePayload) -> DetectionResponse:
         raise HTTPException(status_code=422, detail=f"Feature engineering failed: {exc}") from exc
 
     try:
-        X_scaled  = _scaler.transform(X)
-        catfish_prob_raw: float = _model.predict_proba(X_scaled)[0][1]
+        X_arr    = X.values  # already float32 from _build_feature_vector
+        X_scaled = ((X_arr - _scaler_mean) / _scaler_scale).astype(np.float32)
+        input_name = _session.get_inputs()[0].name
+        outputs    = _session.run(None, {input_name: X_scaled})
+        # outputs[1] is a list of dicts {class_label: probability}
+        catfish_prob_raw: float = float(outputs[1][0][1])
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Model inference failed: {exc}") from exc
 
