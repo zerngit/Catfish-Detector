@@ -1,2 +1,14 @@
-[tool.vercel]
-entrypoint = "api.index:app"
+[project]
+name = "catfish-detector"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "python-multipart>=0.0.9",
+    "onnxruntime>=1.18.0",
+    "scikit-learn>=1.6.0",
+    "pandas>=2.2.0",
+    "numpy>=1.26.0",
+    "pydantic>=2.7.0",
+]
