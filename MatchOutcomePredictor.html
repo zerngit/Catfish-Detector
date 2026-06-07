@@ -551,7 +551,37 @@ function AnalyticsDashboard({ records }) {
 
 // ─── Predictor View (View 1) ──────────────────────────────────────────────────
 
+function randomDemoState() {
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const randInt = (min, max) => String(Math.floor(Math.random() * (max - min + 1)) + min);
+  const randFloat = (min, max, decimals) => (Math.random() * (max - min) + min).toFixed(decimals);
+  const numTags = Math.floor(Math.random() * 4) + 2;
+  const shuffled = [...INTEREST_POOL].sort(() => Math.random() - 0.5);
+  return {
+    gender:               pick(DROPDOWN_OPTIONS.gender),
+    sexual_orientation:   pick(DROPDOWN_OPTIONS.sexual_orientation),
+    location_type:        pick(DROPDOWN_OPTIONS.location_type),
+    income_bracket:       pick(DROPDOWN_OPTIONS.income_bracket),
+    education_level:      pick(DROPDOWN_OPTIONS.education_level),
+    app_usage_time_label: pick(DROPDOWN_OPTIONS.app_usage_time_label),
+    swipe_right_label:    pick(DROPDOWN_OPTIONS.swipe_right_label),
+    swipe_time_of_day:    pick(DROPDOWN_OPTIONS.swipe_time_of_day),
+    interest_tags:        shuffled.slice(0, numTags).join(', '),
+    app_usage_time_minute: randInt(5, 300),
+    swip_right_ratio:     randFloat(0.01, 1.0, 2),
+    likes_received:       randInt(0, 1000),
+    mutual_matches:       randInt(0, 100),
+    profile_pics_count:   randInt(0, 20),
+    bio_length:           randInt(0, 300),
+    message_sent_count:   randInt(0, 500),
+    emoji_usage_rate:     randFloat(0.0, 1.0, 2),
+    last_active_hour:     randInt(0, 23),
+  };
+}
+
 function PredictorView({ formData, setFormData, loading, setLoading, result, setResult, errors, setErrors, apiError, setApiError }) {
+  const [demoClickCount, setDemoClickCount] = useState(0);
+
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -562,13 +592,13 @@ function PredictorView({ formData, setFormData, loading, setLoading, result, set
     setFormData(prev => ({ ...prev, interest_tags: tagString }));
   }, [setFormData]);
 
-  const handleDemo = useCallback((e) => {
-    if (e.target.checked) {
-      setFormData(DEMO_STATE);
+  const handleDemo = useCallback(() => {
+    setDemoClickCount(prev => {
+      const newCount = prev + 1;
+      setFormData(newCount === 1 ? DEMO_STATE : randomDemoState());
       setErrors({});
-    } else {
-      setFormData(INITIAL_STATE);
-    }
+      return newCount;
+    });
   }, [setFormData, setErrors]);
 
   const validate = () => {
@@ -670,13 +700,10 @@ function PredictorView({ formData, setFormData, loading, setLoading, result, set
                   <p className="text-xs text-slate-500">Claimed identity attributes of the profile</p>
                 </div>
               </div>
-              <label className="flex items-center gap-2 cursor-pointer select-none group">
-                <input type="checkbox" onChange={handleDemo}
-                  className="w-4 h-4 rounded accent-rose-500 cursor-pointer" />
-                <span className="text-xs text-slate-400 group-hover:text-slate-200 transition-colors whitespace-nowrap">
-                  Fill demo data
-                </span>
-              </label>
+              <button type="button" onClick={handleDemo}
+                className="text-xs px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-400 hover:text-slate-200 hover:border-rose-500/60 hover:bg-rose-500/10 transition-colors whitespace-nowrap">
+                Fill demo data
+              </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <SelectField label="Gender"            name="gender"            value={formData.gender}            options={DROPDOWN_OPTIONS.gender}            onChange={handleChange} />
