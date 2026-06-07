@@ -764,31 +764,13 @@ function PredictorView({ formData, setFormData, loading, setLoading, result, set
 // ─── Navigation Bar ───────────────────────────────────────────────────────────
 
 function NavBar({ activeTab, setActiveTab }) {
-  const tabs = [
-    { id: 'predictor', label: 'Catfish Predictor',                icon: '🐟' },
-    { id: 'analytics', label: 'Historical Database & Analytics',  icon: '📊' },
-  ];
   return (
     <header className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-sm border-b border-slate-800/80">
-      <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-14 gap-4">
-        <div className="flex items-center gap-2 shrink-0">
+      <div className="max-w-6xl mx-auto px-4 flex items-center h-14 gap-4">
+        <div className="flex items-center gap-2">
           <span className="text-xl">🐟</span>
-          <span className="font-bold text-slate-100 text-sm hidden sm:block">Catfish Detector</span>
+          <span className="font-bold text-slate-100 text-sm">Catfish Detector</span>
         </div>
-        <nav className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-xl p-1">
-          {tabs.map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'bg-rose-500 text-white shadow-sm shadow-rose-500/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}>
-              {tab.icon} <span className="hidden sm:inline">{tab.label}</span>
-              <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="w-20 shrink-0" />
       </div>
     </header>
   );
@@ -798,8 +780,6 @@ function NavBar({ activeTab, setActiveTab }) {
 // Form state is hoisted here so it persists when the user switches tabs.
 
 function App() {
-  const [activeTab, setActiveTab] = useState('predictor');
-
   // Predictor state — lives here so tab switches don't clear the form
   const [formData,  setFormData]  = useState(INITIAL_STATE);
   const [loading,   setLoading]   = useState(false);
@@ -809,17 +789,14 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      <NavBar activeTab={activeTab} setActiveTab={setActiveTab} />
-      {activeTab === 'predictor'
-        ? <PredictorView
-            formData={formData}  setFormData={setFormData}
-            loading={loading}    setLoading={setLoading}
-            result={result}      setResult={setResult}
-            errors={errors}      setErrors={setErrors}
-            apiError={apiError}  setApiError={setApiError}
-          />
-        : <AnalyticsDashboard records={MOCK_DB_RECORDS} />
-      }
+      <NavBar />
+      <PredictorView
+        formData={formData}  setFormData={setFormData}
+        loading={loading}    setLoading={setLoading}
+        result={result}      setResult={setResult}
+        errors={errors}      setErrors={setErrors}
+        apiError={apiError}  setApiError={setApiError}
+      />
     </div>
   );
 }
